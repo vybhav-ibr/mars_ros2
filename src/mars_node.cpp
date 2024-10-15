@@ -28,6 +28,9 @@
 #ifdef GPS_VISION
 #include "mars_wrapper_gps_vision.h"
 #endif
+#ifdef UWB
+#include "mars_wrapper_uwb.h"
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -59,6 +62,9 @@ int main(int argc, char* argv[])
 #endif
 #ifdef GPS_VISION
   MarsWrapperGpsVision mars_core(nh);
+#endif
+#ifdef UWB
+  MarsWrapperUwb mars_core(nh);
 #endif
 
   ros::spin();

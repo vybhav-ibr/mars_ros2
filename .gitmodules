@@ -1,3 +1,4 @@
 [submodule "mars_lib"]
 	path = mars_lib
-	url = https://github.com/aau-cns/mars_lib.git
+	url = https://github.com/vybhav-ibr/mars_lib.git
+	branch =main

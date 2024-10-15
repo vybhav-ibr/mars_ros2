@@ -101,6 +101,9 @@ message(" * Boost: ${Boost_INCLUDE_DIRS}")
    ExtCoreState.msg
    ExtCoreStateLite.msg
    VisionSensorState.msg
+   TwoWayRangeStamped.msg 
+   Uwb_Measurement.msg 
+   Uwb.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -195,13 +198,13 @@ target_link_libraries(pose_node
 )
 set_property(TARGET pose_node PROPERTY COMPILE_DEFINITIONS POSE)
 
-## POSITION
-add_executable(position_node src/mars_node.cpp src/mars_wrapper_position.cpp)
-add_dependencies(position_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
-target_link_libraries(position_node
-  ${catkin_LIBRARIES} ${MARS_LIBRARY}
-)
-set_property(TARGET position_node PROPERTY COMPILE_DEFINITIONS POSITION)
+### POSITION
+#add_executable(position_node src/mars_node.cpp src/mars_wrapper_position.cpp)
+#add_dependencies(position_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
+#target_link_libraries(position_node
+#  ${catkin_LIBRARIES} ${MARS_LIBRARY}
+#)
+#set_property(TARGET position_node PROPERTY COMPILE_DEFINITIONS POSITION)
 
 ## GPS
 add_executable(gps_node src/mars_node.cpp src/mars_wrapper_gps.cpp)
@@ -250,6 +253,14 @@ target_link_libraries(gpsvel_vision_node
   ${catkin_LIBRARIES} ${MARS_LIBRARY}
 )
 set_property(TARGET gpsvel_vision_node PROPERTY COMPILE_DEFINITIONS GPS_VISION GPS_W_VEL)
+
+## POSITION
+add_executable(uwb_node src/mars_node.cpp src/mars_wrapper_uwb.cpp)
+add_dependencies(uwb_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} mars_lib)
+target_link_libraries(uwb_node
+  ${catkin_LIBRARIES} ${MARS_LIBRARY}
+)
+set_property(TARGET uwb_node PROPERTY COMPILE_DEFINITIONS UWB)
 
 ## TF2 Converter
 add_executable(mars_tf2_converter src/tf2_mars/mars_tf2_converter.cpp)

@@ -8,8 +8,8 @@
 //
 // You can contact the author at <christian.brommer@ieee.org>
 
-#ifndef MARSWRAPPERPOSITION_H
-#define MARSWRAPPERPOSITION_H
+#ifndef MARSWRAPPERUWB_H
+#define MARSWRAPPERUWB_H
 
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/PointStamped.h>
@@ -21,6 +21,10 @@
 #include <mars/sensors/imu/imu_sensor_class.h>
 #include <mars/sensors/position/position_measurement_type.h>
 #include <mars/sensors/position/position_sensor_class.h>
+
+#include <mars/sensors/uwb/uwb_measurement_type.h>
+#include <mars/sensors/uwb/uwb_sensor_class.h>
+
 #include <mars_msg_conv.h>
 #include <mars_ros/marsConfig.h>
 #include <nav_msgs/Odometry.h>
@@ -30,7 +34,7 @@
 
 #include <boost/bind/bind.hpp>
 
-class ParamLoadPosition
+class ParamLoad
 {
 public:
   bool publish_on_propagation_{ true };  ///< Set true to publish the core state on propagation
@@ -61,11 +65,11 @@ public:
   Eigen::Vector3d core_init_cov_bw_;
   Eigen::Vector3d core_init_cov_ba_;
 
-  Eigen::Vector3d position1_pos_meas_noise_;
-  Eigen::Vector3d position1_cal_p_ip_;
-  bool position1_use_dyn_meas_noise_{ false };
-  Eigen::Quaterniond position1_cal_q_ip_;
-  Eigen::Matrix<double, 3, 1> position1_state_init_cov_;
+  Eigen::Vector3d uwb_meas_noise_;
+  Eigen::Vector3d uwb_cal_p_ip_;
+  bool uwb_use_dyn_meas_noise_{ false };
+  Eigen::Quaterniond uwb_cal_q_ip_;
+  Eigen::Matrix<double, 3, 1> uwb_state_init_cov_;
 
   void check_size(const int& size_in, const int& size_comp)
   {
@@ -76,7 +80,7 @@ public:
     }
   }
 
-  ParamLoadPosition(const ros::NodeHandle& nh)
+  ParamLoad(const ros::NodeHandle& nh)
   {
     publish_on_propagation_ = nh.param<bool>("pub_on_prop", publish_on_propagation_);
     use_ros_time_now_ = nh.param<bool>("use_ros_time_now", use_ros_time_now_);
@@ -126,32 +130,32 @@ public:
     core_init_cov_ba_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(core_init_cov_ba.data());
 
     // Position1
-    std::vector<double> position1_pos_meas_noise;
-    nh.param("position1_pos_meas_noise", position1_pos_meas_noise, std::vector<double>());
-    check_size(position1_pos_meas_noise.size(), 3);
-    position1_pos_meas_noise_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(position1_pos_meas_noise.data());
+    std::vector<double> uwb_meas_noise;
+    nh.param("uwb_meas_noise",uwb_meas_noise, std::vector<double>());
+    check_size(uwb_meas_noise.size(), 3);
+    uwb_meas_noise_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(uwb_meas_noise.data());
 
-    position1_use_dyn_meas_noise_ = nh.param<bool>("position1_use_dyn_meas_noise", position1_use_dyn_meas_noise_);
+    uwb_use_dyn_meas_noise_ = nh.param<bool>("uwb_use_dyn_meas_noise", uwb_use_dyn_meas_noise_);
 
-    std::vector<double> position1_cal_p_ip;
-    nh.param("position1_cal_p_ip", position1_cal_p_ip, std::vector<double>());
-    check_size(position1_cal_p_ip.size(), 3);
-    position1_cal_p_ip_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(position1_cal_p_ip.data());
+    std::vector<double> uwb_cal_p_ip;
+    nh.param("uwb_cal_p_ip", uwb_cal_p_ip, std::vector<double>());
+    check_size(uwb_cal_p_ip.size(), 3);
+    uwb_cal_p_ip_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(uwb_cal_p_ip.data());
 
-    std::vector<double> position1_state_init_cov;
-    nh.param("position1_state_init_cov", position1_state_init_cov, std::vector<double>());
-    check_size(position1_state_init_cov.size(), 3);
-    position1_state_init_cov_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(position1_state_init_cov.data());
+    std::vector<double> uwb_state_init_cov;
+    nh.param("uwb_state_init_cov", uwb_state_init_cov, std::vector<double>());
+    check_size(uwb_state_init_cov.size(), 3);
+    uwb_state_init_cov_ = Eigen::Map<Eigen::Matrix<double, 3, 1> >(uwb_state_init_cov.data());
   }
 };
 
 ///
 /// \brief The MarsWrapperPosition class MaRS single position node
 ///
-class MarsWrapperPosition
+class MarsWrapperUwb
 {
 public:
-  MarsWrapperPosition(ros::NodeHandle nh);
+  MarsWrapperUwb(ros::NodeHandle nh);
 
   // Settings
   ParamLoad m_sett_;
@@ -192,7 +196,7 @@ public:
   mars::CoreLogic core_logic_;                             ///< Core Logic instance
 
   // Sensor instances
-  std::shared_ptr<mars::PositionSensorClass> position1_sensor_sptr_;  /// Position update sensor instance
+  std::shared_ptr<mars::UwbSensorClass> uwb_sensor_sptr_;  /// Position update sensor instance
 
   // Subscriber
   ros::Subscriber sub_imu_measurement_;            ///< IMU measurement subscriber
@@ -201,6 +205,8 @@ public:
   ros::Subscriber sub_pose_with_cov_measurement_;  ///< Pose with covariance stamped subscriber
   ros::Subscriber sub_odom_measurement_;           ///< Odometry measurement subscriber
   ros::Subscriber sub_transform_measurement_;      ///< Transform stamped measurement subscriber
+
+  ros::Subscriber sub_uwb_measurement_;
 
   // Sensor Callbacks
   ///
@@ -251,13 +257,22 @@ public:
   ///
   void OdomMeasurementCallback(const nav_msgs::OdometryConstPtr& meas);
 
+  // Sensor Callbacks
+  ///
+  /// \brief ImuMeasurementCallback IMU measurment callback
+  /// \param meas
+  ///
+  ///  Converting the ROS message to MaRS data type and running the propagation sensor routine
+  ///
+  void UwbMeasurementCallback(const mars_ros::Uwb::ConstPtr& meas);
+
   // Publisher
   ros::Publisher pub_ext_core_state_;       ///< Publisher for the Core-State mars_ros::ExtCoreState message
   ros::Publisher pub_ext_core_state_lite_;  ///< Publisher for the Core-State mars_ros::ExtCoreStateLite message
   ros::Publisher pub_core_pose_state_;      ///< Publisher for the Core-State pose stamped message
   ros::Publisher pub_core_odom_state_;      ///< Publisher for the Core-State odom stamped message
   ros::Publisher pub_core_path_;            ///< Publisher for all Core-States in buffer as path message
-  ros::Publisher pub_position1_state_;      ///< Publisher for the position sensor calibration state
+  ros::Publisher pub_uwb_cal_state_;      ///< Publisher for the position sensor calibration state
   MarsPathGen path_generator_;              ///< Generator and storage for nav_msgs::Path
 
   // Publish groups
@@ -275,8 +290,9 @@ public:
   /// \param position_meas Measurement to be used for the update
   /// \param timestamp Timestamp of the measurement
   ///
-  void PositionMeasurementUpdate(std::shared_ptr<mars::PositionSensorClass> sensor_sptr,
-                                 const mars::PositionMeasurementType& position_meas, const mars::Time& timestamp);
+
+  void UwbMeasurementUpdate(std::shared_ptr<mars::UwbSensorClass> sensor_sptr,
+                                 const mars::UwbMeasurementType& uwb_meas, const mars::Time& timestamp);
 };
 
-#endif  // MARSWRAPPERPOSITION_H
+#endif  // MARSWRAPPERUWB_H

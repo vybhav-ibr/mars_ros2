@@ -39,9 +39,12 @@
 #include <mars/sensors/vision/vision_measurement_type.h>
 #include <mars/sensors/vision/vision_sensor_state_type.h>
 #include <mars/type_definitions/core_state_type.h>
+#include <mars/sensors/uwb/uwb_measurement_type.h>
+#include <mars/sensors/uwb/uwb_sensor_state_type.h>
 #include <mars_ros/ExtCoreState.h>
 #include <mars_ros/ExtCoreStateLite.h>
 #include <mars_ros/VisionSensorState.h>
+#include <mars_ros/Uwb.h>
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
 #include <sensor_msgs/FluidPressure.h>
@@ -244,6 +247,26 @@ public:
     const Eigen::Vector3d position(msg.point.x, msg.point.y, msg.point.z);
 
     return mars::PositionMeasurementType(position);
+  }
+
+  static inline geometry_msgs::PoseStamped UwbStateToPoseMsg(const double& t,
+                                                              const mars::UwbSensorStateType& uwb_state,
+                                                              const std::string& frame_id = DEFAULT_FRAME_ID)
+  {
+    geometry_msgs::PoseStamped pose_msg;
+    pose_msg.header.stamp.fromSec(t);
+    pose_msg.header.frame_id = frame_id;
+
+    pose_msg.pose.position.x = uwb_state.p_ip_(0);
+    pose_msg.pose.position.y = uwb_state.p_ip_(1);
+    pose_msg.pose.position.z = uwb_state.p_ip_(2);
+
+    //const Eigen::Vector4d q_ip = pose_state.q_ip_.coeffs();  // xyzw
+    pose_msg.pose.orientation.x = 0;
+    pose_msg.pose.orientation.y = 0;
+    pose_msg.pose.orientation.z = 0;
+    pose_msg.pose.orientation.w = 0;
+    return pose_msg;
   }
 
   static inline mars::PositionMeasurementType PoseMsgToPositionMeas(const geometry_msgs::PoseStamped& msg)
@@ -525,6 +548,13 @@ public:
     pose_msg.pose.orientation.z = 0;
     pose_msg.pose.orientation.w = 1;
     return pose_msg;
+  }
+
+  static inline mars::UwbMeasurementType UwbMsgToUwbMeas(const mars_ros::Uwb& msg)
+  {
+    int id=std::stoi(msg.ranges[0].id);
+    double range=(double)msg.ranges[0].distance;
+    return mars::UwbMeasurementType(id,range);
   }
 
   static inline geometry_msgs::Vector3Stamped EigenVec3dToVec3Msg(const double& t, const Eigen::Vector3d& vec,
